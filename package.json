@@ -1,0 +1,11 @@
+{
+    "name": "websocketlab",
+    "version": "0.1.0",
+    "main": "server.js",
+    "dependencies": {
+        "fs": "0.0.1-security",
+        "http": "0.0.0",
+        "log": "^1.4.0",
+        "websocket": "^1.0.25"
+    }
+}

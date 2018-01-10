@@ -50,7 +50,7 @@
 
 		var TEXT_INPUT = document.createElement("input")
 		TEXT_INPUT.type = "text"
-
+		var players = [];
 
 		//Gestion de l'envoi de messages
 		document.body.addEventListener("keydown",function(e) {
@@ -74,17 +74,18 @@
 		///////////////////
 		//CODE TO INSERT HERE
 		///////////////////
-
+		
 		connection.onopen = function () {
 			
 			var name = ''
 			while(name == '')
-				name = prompt("Choose a name", "defaultname")
+			name = prompt("Choose a name", "defaultname")
 			
 			pos = {"x" : Math.random()*CANVAS.width, "y" : Math.random()*CANVAS.height}
 			player = new Player(name,pos)
 			init()
 			
+			connection.send(JSON.stringify(player.name));
 			///////////////////
 			//CODE TO INSERT HERE
 			///////////////////

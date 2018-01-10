@@ -43,11 +43,12 @@ wsServer.on('request', function(request) {
     	///////////////////
 	//CODE TO INSERT HERE
 	///////////////////
-	
 
     connection.on('message', function(message) {
-		if(message.type == 'utf8')
+		if(message.type == 'utf8') {
 			message = JSON.parse(message.utf8Data);
+			console.log(message);
+		}
 		else
 			return
 
