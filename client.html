@@ -1,56 +1,63 @@
 <html>
+	<head>
+		<meta charset="utf-8">
+		<title>Websocket</title>
+	</head>
 	<body>
 		<script src="GameManager.js"></script>
 		<script src="client.js"></script>
 		<script type="text/javascript">
 
 		//Param isLocalPlayer => True to update the local player, false to update other players
-		Player.prototype.say = function(isLocalPlayer,msg){
-			this.msg = new TextBubble(msg,300,this)
-			if(isLocalPlayer){
-				///////////////////
-				//CODE TO INSERT HERE
-				///////////////////
+		Player.prototype.say = function(isLocalPlayer, newMessage) {
+			this.msg = new TextBubble(newMessage,300,this);
+			if (isLocalPlayer) {
+				let message = {
+					id: this.id,
+					type: 'message',
+					data: newMessage
+				};
+				connection.send(JSON.stringify(message));
 			}
 		}
 		
-		Player.prototype.update = function(isLocalPlayer){
-			if(document.activeElement == document.body && isLocalPlayer && (_PRESSED[68] || _PRESSED[65] || _PRESSED[83] || _PRESSED[87])){
+		Player.prototype.update = function(isLocalPlayer) {
+			if(document.activeElement == document.body && isLocalPlayer && (_PRESSED[68] || _PRESSED[65] || _PRESSED[83] || _PRESSED[87])) {
 				if(_PRESSED[68])
-					this.pos.x+=this.speed
+					this.pos.x+=this.speed;
 				else if(_PRESSED[65])
-					this.pos.x-=this.speed
+					this.pos.x-=this.speed;
 				if(_PRESSED[87])
-					this.pos.y-=this.speed
+					this.pos.y-=this.speed;
 				else if(_PRESSED[83])
-					this.pos.y+=this.speed
+					this.pos.y+=this.speed;
 				
-				///////////////////
-				//CODE TO INSERT HERE
-				///////////////////
-
+				let message = {
+					id: this.id,
+					type: 'position',
+					data: this.pos
+				};
+				connection.send(JSON.stringify(message));
 			}
-			if(this.msg){
-				this.msg.ttl--
+			if(this.msg) {
+				this.msg.ttl--;
 				if(this.msg.ttl <= 0)
-					this.msg = undefined
+					this.msg = undefined;
 			}
-		}
-
+		};
 
 		//Globals
-		var CANVAS = document.createElement("canvas")
+		let CANVAS = document.createElement("canvas")
 		CANVAS.width = 600
 		CANVAS.height = 600
 		CANVAS.style.border = "1px solid black"
-		var CONTEXT = CANVAS.getContext("2d")
+		let CONTEXT = CANVAS.getContext("2d")
 		CONTEXT.textBaseline = "middle"
 		CONTEXT.textAlign = "center"
 		CONTEXT.font="15px Georgia";
 
-		var TEXT_INPUT = document.createElement("input")
-		TEXT_INPUT.type = "text"
-		var players = [];
+		let TEXT_INPUT = document.createElement("input");
+		TEXT_INPUT.type = "text";
 
 		//Gestion de l'envoi de messages
 		document.body.addEventListener("keydown",function(e) {
@@ -69,65 +76,83 @@
 			}
 		})
 
-		var connection = new WebSocket('ws://'+window.location.host)
-		
-		///////////////////
-		//CODE TO INSERT HERE
-		///////////////////
+		let connection = new WebSocket('ws://'+window.location.host);
+		let player = undefined;
+		let players = [];
 		
 		connection.onopen = function () {
+			let name = '';
+			while(name == '') {
+				name = prompt("Choose a name", "defaultname");
+			}
 			
-			var name = ''
-			while(name == '')
-			name = prompt("Choose a name", "defaultname")
+			let pos = {"x" : Math.random()*CANVAS.width, "y" : Math.random()*CANVAS.height};
+			player = new Player(name, pos);
+			init();
 			
-			pos = {"x" : Math.random()*CANVAS.width, "y" : Math.random()*CANVAS.height}
-			player = new Player(name,pos)
-			init()
-			
-			connection.send(JSON.stringify(player.name));
-			///////////////////
-			//CODE TO INSERT HERE
-			///////////////////
+			let message = {
+				type: 'hello',
+				data: player
+			};
+			connection.send(JSON.stringify(message));
 		}
 
 		connection.onmessage = function (message) {
 			try {
-				var message = JSON.parse(message.data);	
+				console.log(message);
+				message = JSON.parse(message.data);	
 			} catch (e) {
 				console.log('Invalid JSON: ', message.data);
-				return
+				return;
 			}
-			console.log("Message in : ")
-			console.log(message)
+			console.log("Message in : ");
+			console.log(message);
 
-			///////////////////
-			//CODE TO INSERT HERE
-			///////////////////
+			switch(message.type) {
+				case 'id':
+					player.id = message.id;
+					break;
+				case 'hello':
+					let newPlayer = new Player(message.data.name, message.data.pos);
+					newPlayer.id = message.id;
+					players[message.id] = newPlayer;
+					break;
+				case 'position':
+					players[message.id].pos = message.data;
+					update();
+					break;
+				case 'message':
+					players[message.id].say(false, message.data);
+					draw();
+					break;
+				default:
+					break;
+			}
 		}
 
 		//Functions
-		var update = function(){
+		let update = function(){
 			player.update(true)
 			players.forEach(function(p){
 				p.update(false)
 			})
-		}
+		};
 
-		var draw = function(){
+		let draw = function() {
 			CONTEXT.clearRect(0,0,CANVAS.width,CANVAS.height)
 			players.forEach(function(p){
 				p.draw()
 			})
 			player.draw()
-		}
+		};
+
 		function init(){
 			document.body.appendChild(CANVAS)
 			document.body.appendChild(TEXT_INPUT)
 			GAME.setDrawFunction(draw)
 			GAME.setUpdateFunction(update)
 			GAME.init()
-		}
+		};
 		</script>
 
 	</body>
