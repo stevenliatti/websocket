@@ -99,7 +99,6 @@
 
 		connection.onmessage = function (message) {
 			try {
-				console.log(message);
 				message = JSON.parse(message.data);	
 			} catch (e) {
 				console.log('Invalid JSON: ', message.data);
@@ -117,12 +116,23 @@
 					newPlayer.id = message.id;
 					players[message.id] = newPlayer;
 					break;
+				case 'close':
+					players.splice(message.id, 1);
+					break;
 				case 'position':
-					players[message.id].pos = message.data;
+					players.forEach(function(p) {
+						if (p.id === message.id) {
+							p.pos = message.data;
+						}
+					});
 					update();
 					break;
 				case 'message':
-					players[message.id].say(false, message.data);
+					players.forEach(function(p) {
+						if (p.id === message.id) {
+							p.say(false, message.data);
+						}
+					});
 					draw();
 					break;
 				default:

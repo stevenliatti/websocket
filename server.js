@@ -71,7 +71,7 @@ wsServer.on('request', function(request) {
 				connection.send(JSON.stringify(message));
 
 				message.type = 'hello';
-				for (const conn of connections) {
+				connections.forEach(function(conn) {
 					// Send to others clients infos about new player
 					message.id = id;
 					message.data = player;
@@ -81,28 +81,39 @@ wsServer.on('request', function(request) {
 					message.id = conn.id;
 					message.data = conn.player;
 					connection.send(JSON.stringify(message));
-				}
+				});
 				connections[id] = connection;
 				id++;
-
 				break;
 			case 'position':
 			case 'message':
-				for (const conn of connections) {
+				connections.forEach(function(conn) {
 					if (conn.id != connection.id) {
 						conn.send(JSON.stringify(msg));
 					}
-				}
+					else {
+						if (msg.type === 'position') {
+							conn.player.pos = msg.data;
+						}
+						else {
+							conn.player.msg = msg.data;
+						}
+					}
+				});
 				break;
 			default:
 				break;
 		}
     });
 
-    connection.on('close', function(connection) {
-    		///////////////////
-		//CODE TO INSERT HERE
-		///////////////////
-
+    connection.on('close', function(close) {
+    	let message = {
+			id: connection.id,
+			type: 'close'
+		};
+		connections.splice(connection.id, 1);
+		connections.forEach(function(conn) {
+			conn.send(JSON.stringify(message));
+		});
     });
 })
